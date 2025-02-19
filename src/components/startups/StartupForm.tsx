@@ -5,10 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
-// Define industry type to match database enum
-type IndustryType = 'fintech' | 'healthtech' | 'ecommerce' | 'saas' | 'ai_ml' | 
-                    'cleantech' | 'edtech' | 'enterprise' | 'consumer' | 'other';
+type IndustryType = Database["public"]["Enums"]["industry_type"];
 
 export const StartupForm = () => {
   const navigate = useNavigate();
@@ -63,13 +62,13 @@ export const StartupForm = () => {
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value as IndustryType }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, files: uploadedFiles } = e.target;
-    if (uploadedFiles?.[0]) {
-      setFiles(prev => ({ ...prev, [name]: uploadedFiles[0] }));
+    const { name, files } = e.target;
+    if (files?.[0]) {
+      setFiles(prev => ({ ...prev, [name]: files[0] }));
     }
   };
 
@@ -98,7 +97,7 @@ export const StartupForm = () => {
         .from('startups')
         .insert({
           name: formData.name,
-          industry: formData.industry as IndustryType,
+          industry: formData.industry,
           founding_year: parseInt(formData.foundingYear),
           location: formData.location,
           employee_count: parseInt(formData.employeeCount),
@@ -132,11 +131,11 @@ export const StartupForm = () => {
         .from('startup_financials')
         .insert({
           startup_id: startup.id,
-          current_revenue: parseFloat(formData.currentRevenue),
-          burn_rate: parseFloat(formData.burnRate),
-          runway_months: parseInt(formData.runwayMonths),
-          funding_raised: parseFloat(formData.fundingRaised),
-          valuation: parseFloat(formData.valuation),
+          current_revenue: formData.currentRevenue ? parseFloat(formData.currentRevenue) : null,
+          burn_rate: formData.burnRate ? parseFloat(formData.burnRate) : null,
+          runway_months: formData.runwayMonths ? parseInt(formData.runwayMonths) : null,
+          funding_raised: formData.fundingRaised ? parseFloat(formData.fundingRaised) : null,
+          valuation: formData.valuation ? parseFloat(formData.valuation) : null,
         });
 
       if (financialsError) throw financialsError;
@@ -156,34 +155,26 @@ export const StartupForm = () => {
 
       if (teamError) throw teamError;
 
-      // Upload files
+      // Handle file uploads
       for (const [type, file] of Object.entries(files)) {
         if (file) {
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('startupId', startup.id);
-          formData.append('type', type);
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('startup-documents')
+            .upload(`${startup.id}/${type}`, file);
 
-          const response = await fetch('/api/upload-document', {
-            method: 'POST',
-            body: formData,
-          });
+          if (uploadError) throw uploadError;
 
-          if (!response.ok) {
-            throw new Error(`Failed to upload ${type}`);
-          }
+          // Create document record
+          const { error: documentError } = await supabase
+            .from('documents')
+            .insert({
+              startup_id: startup.id,
+              type,
+              file_url: uploadData.path,
+            });
+
+          if (documentError) throw documentError;
         }
-      }
-
-      // Trigger AI analysis
-      const response = await fetch('/api/analyze-startup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ startupId: startup.id }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to initiate AI analysis');
       }
 
       toast({
@@ -193,6 +184,7 @@ export const StartupForm = () => {
 
       navigate(`/startups/${startup.id}`);
     } catch (error) {
+      console.error('Submission error:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -207,7 +199,7 @@ export const StartupForm = () => {
     <Card className="glass-panel p-6 max-w-4xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6">
         {step === 1 && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-4">
             <h2 className="text-xl font-semibold mb-4">Company Information</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -245,14 +237,52 @@ export const StartupForm = () => {
                   <option value="other">Other</option>
                 </select>
               </div>
-              
-              {/* Add other step 1 fields */}
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Founding Year</label>
+                <input
+                  type="number"
+                  name="foundingYear"
+                  value={formData.foundingYear}
+                  onChange={handleInputChange}
+                  className="w-full p-2 rounded-md bg-white/5 border border-white/10"
+                  required
+                  min="1900"
+                  max={new Date().getFullYear()}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Location</label>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  className="w-full p-2 rounded-md bg-white/5 border border-white/10"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Number of Employees</label>
+                <input
+                  type="number"
+                  name="employeeCount"
+                  value={formData.employeeCount}
+                  onChange={handleInputChange}
+                  className="w-full p-2 rounded-md bg-white/5 border border-white/10"
+                  required
+                  min="1"
+                />
+              </div>
             </div>
             
             <Button 
               type="button" 
               onClick={() => setStep(2)}
               className="mt-4"
+              disabled={loading}
             >
               Next: Business Details
             </Button>
