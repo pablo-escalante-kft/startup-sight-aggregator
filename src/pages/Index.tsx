@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,11 +10,14 @@ import {
   Users, 
   Database, 
   Search,
-  LogOut 
+  LogOut,
+  RefreshCw,
+  AlertCircle 
 } from "lucide-react";
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,6 +38,30 @@ const Index = () => {
         description: "Failed to sign out. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleAnalyzeStartup = async (startupId: string) => {
+    setIsAnalyzing(true);
+    try {
+      const { error } = await supabase.functions.invoke('analyze-startup', {
+        body: { startupId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Analysis Started",
+        description: "The AI analysis has been initiated. Check back soon for results.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Analysis Failed",
+        description: error.message || "Failed to start analysis. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -104,7 +132,18 @@ const Index = () => {
                         <h3 className="font-medium">{submission.name}</h3>
                         <p className="text-sm text-gray-400">{submission.industry}</p>
                       </div>
-                      <Button variant="outline">View Details</Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => handleAnalyzeStartup(submission.id)}
+                        disabled={isAnalyzing}
+                      >
+                        {isAnalyzing ? (
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 mr-2" />
+                        )}
+                        Analyze
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -153,9 +192,9 @@ const StatCard = ({ title, value, icon }: { title: string; value: string; icon: 
 );
 
 const recentSubmissions = [
-  { name: "TechCorp AI", industry: "Artificial Intelligence" },
-  { name: "GreenEnergy Solutions", industry: "Clean Technology" },
-  { name: "HealthTech Innovations", industry: "Healthcare" },
+  { id: "1", name: "TechCorp AI", industry: "Artificial Intelligence" },
+  { id: "2", name: "GreenEnergy Solutions", industry: "Clean Technology" },
+  { id: "3", name: "HealthTech Innovations", industry: "Healthcare" },
 ];
 
 const analysisQueue = [
