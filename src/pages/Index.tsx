@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,8 +13,10 @@ import {
   RefreshCw,
   AlertCircle 
 } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
@@ -70,15 +71,15 @@ const Index = () => {
       <div className="min-h-screen bg-gradient-dark">
         <nav className="glass-panel m-4 p-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+            <Link to="/dashboard" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
               DNV
-            </span>
+            </Link>
           </div>
           <div className="flex space-x-4 items-center">
-            <button className="nav-link">Dashboard</button>
-            <button className="nav-link">Startups</button>
-            <button className="nav-link">Analysis</button>
-            <button className="nav-link">Settings</button>
+            <Link to="/dashboard" className="nav-link">Dashboard</Link>
+            <Link to="/startups" className="nav-link">Startups</Link>
+            <Link to="/analysis" className="nav-link">Analysis</Link>
+            <Link to="/settings" className="nav-link">Settings</Link>
             <Button 
               variant="ghost" 
               size="icon"

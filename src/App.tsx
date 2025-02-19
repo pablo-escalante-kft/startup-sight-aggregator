@@ -8,6 +8,11 @@ import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/auth";
+import StartupList from "./pages/startups";
+import StartupDetail from "./pages/startups/[id]";
+import StartupCreate from "./pages/startups/create";
+import AnalysisDashboard from "./pages/analysis";
+import Settings from "./pages/settings";
 
 const queryClient = new QueryClient();
 
@@ -21,7 +26,11 @@ const App = () => (
           <Route path="/" element={<Landing />} />
           <Route path="/dashboard" element={<Index />} />
           <Route path="/auth" element={<AuthPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/startups" element={<StartupList />} />
+          <Route path="/startups/:id" element={<StartupDetail />} />
+          <Route path="/startups/create" element={<StartupCreate />} />
+          <Route path="/analysis" element={<AnalysisDashboard />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
