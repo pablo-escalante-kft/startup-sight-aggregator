@@ -21,13 +21,12 @@ export default function Landing() {
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from("waitlist")
-        .insert({
-          email: formData.email,
-          full_name: formData.fullName,
-          company: formData.company,
-        });
+      // Using raw query to bypass TypeScript issues since the table was just created
+      const { error } = await supabase.rpc('add_to_waitlist', {
+        p_email: formData.email,
+        p_full_name: formData.fullName,
+        p_company: formData.company
+      });
 
       if (error) throw error;
 
