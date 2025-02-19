@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+// Define industry type to match database enum
+type IndustryType = 'fintech' | 'healthtech' | 'ecommerce' | 'saas' | 'ai_ml' | 
+                    'cleantech' | 'edtech' | 'enterprise' | 'consumer' | 'other';
+
 export const StartupForm = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -15,7 +19,7 @@ export const StartupForm = () => {
   const [formData, setFormData] = useState({
     // Company Information
     name: "",
-    industry: "",
+    industry: "" as IndustryType,
     foundingYear: "",
     location: "",
     employeeCount: "",
@@ -45,12 +49,19 @@ export const StartupForm = () => {
   ]);
 
   const [files, setFiles] = useState({
-    pitchDeck: null,
-    financialStatements: null,
-    businessPlan: null,
+    pitchDeck: null as File | null,
+    financialStatements: null as File | null,
+    businessPlan: null as File | null,
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -87,7 +98,7 @@ export const StartupForm = () => {
         .from('startups')
         .insert({
           name: formData.name,
-          industry: formData.industry,
+          industry: formData.industry as IndustryType,
           founding_year: parseInt(formData.foundingYear),
           location: formData.location,
           employee_count: parseInt(formData.employeeCount),
@@ -217,7 +228,7 @@ export const StartupForm = () => {
                 <select
                   name="industry"
                   value={formData.industry}
-                  onChange={handleInputChange}
+                  onChange={handleSelectChange}
                   className="w-full p-2 rounded-md bg-white/5 border border-white/10"
                   required
                 >
