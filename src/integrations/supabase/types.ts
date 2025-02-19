@@ -341,6 +341,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_to_waitlist: {
+        Args: {
+          p_email: string
+          p_full_name: string
+          p_company: string
+        }
+        Returns: undefined
+      }
       generate_submission_url: {
         Args: {
           startup_id: string
