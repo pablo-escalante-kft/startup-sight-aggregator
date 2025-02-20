@@ -12,7 +12,7 @@ const AuthPage = () => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/");
+        navigate("/dashboard");
       }
     };
     checkAuth();
@@ -20,7 +20,7 @@ const AuthPage = () => {
     // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN") {
-        navigate("/");
+        navigate("/dashboard");
       }
     });
 

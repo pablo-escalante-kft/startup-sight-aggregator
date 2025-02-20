@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 type AuthMode = "signin" | "signup";
 
@@ -14,6 +15,7 @@ export const AuthForm = () => {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +38,7 @@ export const AuthForm = () => {
           title: "Account created",
           description: "Please check your email to verify your account."
         });
+        navigate("/dashboard");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -46,6 +49,7 @@ export const AuthForm = () => {
           title: "Welcome back!",
           description: "Successfully signed in."
         });
+        navigate("/dashboard");
       }
     } catch (error) {
       toast({
